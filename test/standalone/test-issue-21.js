@@ -1,5 +1,4 @@
 var assert = require('assert');
-var fs = require('fs');
 var http = require('http');
 var net = require('net');
 var multiparty = require('../../');
@@ -8,37 +7,19 @@ var client;
 var server = http.createServer(function(req, res) {
   var form = new multiparty.Form();
 
-  form.parse(req, function(err, fields, files) {
+  form.parse(req, function(err, fieldsTable, filesTable, fieldsList, filesList) {
     if (err) {
       console.error(err.stack);
       return;
     }
-    var nameCount = 0;
-    var name;
-    for (name in fields) {
-      assert.strictEqual(name, "title");
-      nameCount += 1;
-
-      var values = fields[name];
-      assert.strictEqual(values.length, 1);
-      assert.strictEqual(values[0], "foofoo");
-    }
-    assert.strictEqual(nameCount, 1);
-
-    nameCount = 0;
-    for (name in files) {
-      assert.strictEqual(name, "upload");
-      nameCount += 1;
-
-      var filesList = files[name];
-      assert.strictEqual(filesList.length, 4);
-      filesList.forEach(function(file){
-        assert.strictEqual(file.fieldName, "upload");
-        fs.unlinkSync(file.path);
-      });
-    }
-    assert.strictEqual(nameCount, 1);
-
+    assert.strictEqual(fieldsList.length, 1);
+    assert.strictEqual(fieldsList[0].name, "title");
+    assert.strictEqual(fieldsList[0].value, "foofoo");
+    assert.strictEqual(filesList.length, 4);
+    assert.strictEqual(filesList[0].fieldName, "upload");
+    assert.strictEqual(filesList[1].fieldName, "upload");
+    assert.strictEqual(filesList[2].fieldName, "upload");
+    assert.strictEqual(filesList[3].fieldName, "upload");
     res.end();
     client.end();
     server.close();
@@ -48,7 +29,7 @@ server.listen(function() {
   client = net.connect(server.address().port);
 
   client.write("POST /upload HTTP/1.1\r\n" +
-    "Content-Length: 726\r\n" +
+    "Content-Length: 728\r\n" +
     "Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryvfUZhxgsZDO7FXLF\r\n" +
     "\r\n" +
     "------WebKitFormBoundaryvfUZhxgsZDO7FXLF\r\n" +
